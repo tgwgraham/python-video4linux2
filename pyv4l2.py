@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# Released under the GPL v3 by Jackson Yee (jackson@gotpossum.com)
+# Copyright 2008
+
 from ctypes import *
 import os
 import Image as PILImage

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# Released under the GPL v3 by Jackson Yee (jackson@gotpossum.com)
+# Copyright 2008
+
 import pyv4l2
 
 import sys

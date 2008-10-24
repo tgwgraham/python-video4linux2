@@ -1,3 +1,7 @@
+/* Released under the GPL v3 by Jackson Yee (jackson@gotpossum.com)
+ * Copyright 2008
+ */
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
