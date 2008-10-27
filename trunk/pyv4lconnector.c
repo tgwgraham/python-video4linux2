@@ -67,64 +67,43 @@ int Close(int fd)
 //  =====================================================================
 int QueryCaps(int fd, struct v4l2_capability* caps)
 {
-	if (ioctl(fd, VIDIOC_QUERYCAP, caps) == -1)
-		return -1;
-	
-	return 0;
+	return ioctl(fd, VIDIOC_QUERYCAP, caps);
 }
 
 //  =====================================================================
 int EnumInput(int fd, struct v4l2_input* input)
 {
-	if (ioctl(fd, VIDIOC_ENUMINPUT, input) == -1)
-		return -1;
-	
-	return 0;
+	return ioctl(fd, VIDIOC_ENUMINPUT, input);
 }
 
 //  =====================================================================
 int EnumFormat(int fd, struct v4l2_fmtdesc* input)
 {
-	if (ioctl(fd, VIDIOC_ENUM_FMT, input) == -1)
-		return -1;
-	
-	return 0;
+	return ioctl(fd, VIDIOC_ENUM_FMT, input);
 }
 
 //  =====================================================================
 int SetInput(int fd, int input)
 {
-	if (ioctl(fd, VIDIOC_S_INPUT, &input ) == -1)
-		return -1;
-	
-	return 0;
+	return ioctl(fd, VIDIOC_S_INPUT, &input );
 }
 
 //  =====================================================================
 int SetStandard(int fd, v4l2_std_id std)
 {
-	if (ioctl(fd, VIDIOC_S_STD, &std ) == -1)
-		return -1;
-	
-	return 0;
+	return ioctl(fd, VIDIOC_S_STD, &std );
 }
 
 //  =====================================================================
 int GetFormat(int fd, struct v4l2_format* f)
 {
-	if (ioctl(fd, VIDIOC_G_FMT, f) == -1)
-		return -1;
-	
-	return 0;
+	return ioctl(fd, VIDIOC_G_FMT, f);
 }
 
 //  =====================================================================
 int SetFormat(int fd, struct v4l2_format* f)
 {
-	if (ioctl(fd, VIDIOC_S_FMT, f) == -1)
-		return -1;
-	
-	return 0;
+	return ioctl(fd, VIDIOC_S_FMT, f);
 }
 
 //  =====================================================================
@@ -136,28 +115,49 @@ int Read(int fd, char* buf, int bufsize)
 //  =====================================================================
 int RequestBuffers(int fd, struct v4l2_requestbuffers* f)
 {
-	if (ioctl(fd, VIDIOC_REQBUFS, f) == -1)
-		return -1;
-	
-	return 0;
+	return ioctl(fd, VIDIOC_REQBUFS, f);
+}
+
+//  =====================================================================
+int QueryBuf(int fd, struct v4l2_buffer* f)
+{
+	return ioctl(fd, VIDIOC_QUERYBUF, f);
 }
 
 //  =====================================================================
 int Queue(int fd, struct v4l2_buffer* f)
 {
-	if (ioctl(fd, VIDIOC_QBUF, f) == -1)
-		return -1;
-	
-	return 0;
+	return ioctl(fd, VIDIOC_QBUF, f);
 }
 
 //  =====================================================================
 int Dequeue(int fd, struct v4l2_buffer* f)
 {
-	if (ioctl(fd, VIDIOC_DQBUF, f) == -1)
-		return -1;
-	
-	return 0;
+	return ioctl(fd, VIDIOC_DQBUF, f);
+}
+
+//  =====================================================================
+int StreamOn(int fd, int type)
+{
+	return ioctl(fd, VIDIOC_STREAMON, &type);
+}
+
+//  =====================================================================
+int StreamOff(int fd, int type)
+{
+	return ioctl(fd, VIDIOC_STREAMOFF, &type);
+}
+
+//  =====================================================================
+void* MMap(int fd, size_t size, off_t offset)
+{
+	return mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, offset);
+}
+
+//  =====================================================================
+int MUnmap(void* start, size_t length)
+{
+	return munmap(start, length);
 }
 
 int main(int argc, char* argv)
