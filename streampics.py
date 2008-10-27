@@ -9,11 +9,24 @@ import sys
 import datetime
 import os
 
+numpictures	=	0.0
+
+def StreamCallback(d, b, p):
+	global numpictures
+	#print 'Got frame %s of size %s at %s' % (b.sequence, b.bytesused, int(p))
+	filename = '%s/%09i.jpg' % (sys.argv[6], b.sequence)
+	d.SaveJPEG(filename, 70, p)
+	print 'Saved', filename
+	numpictures += 1
+	return True
+
 def Run():
+	global numpictures
+	
 	if len(sys.argv) < 7:
 		print """recordpics.py device input pixelformat width height outputdir
 		
-Sample application to test pyv4l2 read functionality
+Sample application to test pyv4l2 mmap functionality
 	
 	device		Video device: e.g. /dev/video0
 	input		Input number: typically 0-8
@@ -51,22 +64,19 @@ Sample application to test pyv4l2 read functionality
 		)
 	
 	try:
-		while True:
-			d.Read()
-			filename = '%s/%09i.jpg' % (sys.argv[6], i)
-			d.SaveJPEG(filename, 70)
-			print 'Saved', filename
-			i += 1
+		d.SetupStreaming(5, StreamCallback)
 	except KeyboardInterrupt:
+		d.StreamOff()
+		d.UnmapBuffers()
 		print '\nKeyboard interrupt caught. Quitting...'
 	
 	endtime = datetime.datetime.now()
 	elapsedtime	=	endtime - starttime
 	seconds = elapsedtime.seconds + (float(elapsedtime.microseconds) / 1000000)
 	
-	print 'Saved %i pictures in %.2f seconds: %f fps' % (i, 
+	print 'Saved %i pictures in %.2f seconds: %.2f fps' % (numpictures, 
 		seconds, 
-		i / seconds)
+		numpictures / seconds)
 	
 
 if __name__ == '__main__':

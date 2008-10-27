@@ -9,6 +9,7 @@ import Image as PILImage
 
 lib = cdll.LoadLibrary("./libpyv4l2.so")
 lib.Error.restype = c_char_p
+lib.MMap.restype = c_void_p
 
 # *********************************************************************
 def ListFlags(value, flags):
@@ -72,19 +73,30 @@ class TimeCode(Structure):
 		('hours',					c_ubyte),
 		('userbits',			c_ubyte * 4),
 	]
-	
+
 # *********************************************************************
 class Buffer(Structure):
+	class M(Union):
+		_fields_	=	[
+			('offset',				c_uint),
+			('userptr',				c_ulong),
+		]
+		
 	_fields_	=	[
 		('index',					c_uint),
 		('type',					c_uint),
 		('bytesused',			c_uint),
 		('flags',					c_uint),
 		('field',					c_uint),
-		('seconds',				c_uint),
-		('nanoseconds',		c_uint),
+		('seconds',				c_long),
+		('nanoseconds',		c_long),
 		('timecode',			TimeCode),
 		('sequence',			c_uint),
+		('memory',				c_uint),
+		('m',							M),
+		('length',				c_uint),
+		('input',					c_uint),
+		('reserved',			c_uint),
 	]
 	
 # *********************************************************************
@@ -110,6 +122,7 @@ class Device(object):
 	buffer				=	None
 	format				=	None
 	caps					=	[]
+	buffers				=	[]
 	
 	capabilities	=	{
 		'Capture'							:	0x01,
@@ -507,23 +520,154 @@ class Device(object):
 		
 	# -------------------------------------------------------------------
 	def __del__(self):
+		self.UnmapBuffers()
 		if lib:
-			lib.Close(self.fd)
+			lib.Close(self.fd)		
 			
 	# -------------------------------------------------------------------
-	def AddBuffer(self):
-		"""Adds an additional buffer to the queue.
-		"""
-		self.GetFormat()
-		self.buffer = create_string_buffer(self.format.sizeimage)
-		
-	# -------------------------------------------------------------------
 	def Read(self):
-		if self.buffer:
-			lib.read(self.fd, self.buffer, self.format.sizeimage)
+		if not self.buffer:
+			if not self.format:
+				self.GetFormat()
+			self.buffer = create_string_buffer(self.format.sizeimage)
+			
+		lib.read(self.fd, self.buffer, self.format.sizeimage)
 		
 	# -------------------------------------------------------------------
-	def SaveJPEG(self, filename, q = 70):
+	def RequestBuffers(self, numbuffers, type = 1, memory = 1):
+		s = RequestBuffers()
+		s.count		=	numbuffers
+		s.type		=	type
+		s.memory	=	memory
+		
+		if lib.RequestBuffers(self.fd, byref(s)) == -1:
+			raise Exception('Could not request %i buffers:\t%i: %s' % 
+				(	numbuffers,
+					lib.Errno(), 
+					lib.Error()
+				)
+			)		
+			
+		return s.count
+		
+	# -------------------------------------------------------------------
+	def MapBuffers(self, count):
+		b = Buffer()
+		b.type		=	1
+		b.memory	=	1
+			
+		for i in xrange(0, count):
+			b.index		=	i
+			
+			self.QueryBuf(b)
+			
+			start = lib.MMap(self.fd, b.length, b.m.offset)
+			
+			if start == -1:
+				raise Exception('Could not map buffer %i:\t%i: %s' % 
+					(	i,
+						lib.Errno(), 
+						lib.Error()
+					)
+				)		
+			
+			print 'MMap.start:\t%s' % start
+			
+			self.buffers.append( (i, start, b.length) )
+		
+	# -------------------------------------------------------------------
+	def UnmapBuffers(self):
+		for b in self.buffers:
+			lib.MUnmap(b[1], b[2])
+		self.buffers = []
+		
+	# -------------------------------------------------------------------
+	def QueryBuf(self, buf):
+		if lib.QueryBuf(self.fd, byref(buf)) == -1:
+			raise Exception('Could not query buffer:\t%i: %s' % 
+				(	lib.Errno(), 
+					lib.Error()
+				)
+			)		
+		
+	# -------------------------------------------------------------------
+	def StreamOn(self, type = 1):
+		if lib.StreamOn(self.fd) == -1:
+			raise Exception('Could not start streaming:\t%i: %s' % 
+				(	lib.Errno(), 
+					lib.Error()
+				)
+			)		
+		
+	# -------------------------------------------------------------------
+	def StreamOff(self, type = 1):
+		if lib.StreamOff(self.fd) == -1:
+			raise Exception('Could not end streaming:\t%i: %s' % 
+				(	lib.Errno(), 
+					lib.Error()
+				)
+			)		
+		
+	# -------------------------------------------------------------------
+	def QueueBuffer(self, buf):
+		if lib.Queue(self.fd, byref(buf)) == -1:
+			raise Exception('Could not queue buffer:\t%i: %s' % 
+				(	lib.Errno(), 
+					lib.Error()
+				)
+			)		
+		
+	# -------------------------------------------------------------------
+	def DequeueBuffer(self, buf):
+		if lib.Dequeue(self.fd, byref(buf)) == -1:
+			raise Exception('Could not dequeue buffer:\t%i: %s' % 
+				(	lib.Errno(), 
+					lib.Error()
+				)
+			)		
+		
+	# -------------------------------------------------------------------
+	def SetupStreaming(self, numbuffers, callback):
+		"""Convenience function to setup mmap streaming with 
+		the requested number of buffers and a callback function 
+		to be called whenever a buffer is filled.
+		
+		The callback function is setup as
+		
+		def callback(Device d, Buffer b, ctypes.c_void_p p)
+		
+		To continue streaming, the callback should return True. Returning
+		False will result in streaming being discontinued and all existing
+		buffers returned.
+		"""
+		self.MapBuffers( self.RequestBuffers(numbuffers)	)
+		self.StreamOn()
+		
+		b = Buffer()
+		b.type		=	1
+		b.memory	=	1
+		
+		for i in xrange(0, len(self.buffers) ):
+			b.index	=	i
+			self.QueueBuffer(b)
+		
+		self.StreamOn()
+		
+		while True:
+			self.DequeueBuffer(b)
+			if not callback(self, 
+					b, 
+					string_at( self.buffers[b.index][1], self.buffers[b.index][2] ) 
+				):
+				break
+			self.QueueBuffer(b)
+		
+		self.StreamOff()
+		
+		self.UnmapBuffers()
+		
+	# -------------------------------------------------------------------
+	def SaveJPEG(self, filename, q = 70, buffer = None):
 		"""Saves the current buffer to filename as a JPEG image.
 		"""
 		p = self.format.pixelformat
@@ -534,16 +678,20 @@ class Device(object):
 			p = 'BGR'
 		elif p == 'RGB3':
 			p = 'RGB'
+			
+		if not buffer:
+			buffer	= self.buffer
 		
 		img = PILImage.frombuffer('RGB', 
 			(self.format.width, self.format.height),
-			self.buffer,
+			buffer,
 			'raw',
 			p,
 			0,
 			1)
 		img.save(filename, 'jpeg', quality = q)
 
+# =====================================================================
 if __name__ == '__main__':
 	ls = Device.List()
 	print 'Available devices: '
