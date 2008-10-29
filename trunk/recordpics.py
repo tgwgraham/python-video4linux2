@@ -8,6 +8,7 @@ import pyv4l2
 import sys
 import datetime
 import os
+import sys
 
 def Run():
 	if len(sys.argv) < 7:
@@ -55,7 +56,8 @@ Sample application to test pyv4l2 read functionality
 			d.Read()
 			filename = '%s/%09i.jpg' % (sys.argv[6], i)
 			d.SaveJPEG(filename, 70)
-			print 'Saved', filename
+			sys.stdout.write('.')
+			sys.stdout.flush()
 			i += 1
 	except KeyboardInterrupt:
 		print '\nKeyboard interrupt caught. Quitting...'

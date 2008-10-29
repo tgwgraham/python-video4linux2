@@ -8,18 +8,21 @@ import pyv4l2
 import sys
 import datetime
 import os
+import sys
 
 numpictures	=	0.0
 
+# =====================================================================
 def StreamCallback(d, b, p):
 	global numpictures
-	#print 'Got frame %s of size %s at %s' % (b.sequence, b.bytesused, int(p))
 	filename = '%s/%09i.jpg' % (sys.argv[6], b.sequence)
 	d.SaveJPEG(filename, 70, p)
-	print 'Saved', filename
+	sys.stdout.write('.')
+	sys.stdout.flush()
 	numpictures += 1
 	return True
 
+# =====================================================================
 def Run():
 	global numpictures
 	
