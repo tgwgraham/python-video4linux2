@@ -33,10 +33,10 @@ def Run():
 		default="RGB4", 
 		help="Format code [%default]", )
 	parser.add_option("-x", "--width", 
-		type="int", default="800",
+		type="int", default="640",
 		help="Capture width [%default]", )
 	parser.add_option("-y", "--height", 
-		type="int", default="600",
+		type="int", default="480",
 		help="Capture height [%default]", )
 	parser.add_option("-o", "--outputdir", 
 		default="test",
