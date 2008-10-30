@@ -75,7 +75,6 @@ def Run():
 			d.Read()
 			filename = '%s/%09i.jpg' % (options.outputdir, i)
 			d.SaveJPEG(filename, 70)
-			print 'Saved', filename
 			sys.stdout.write('.')
 			sys.stdout.flush()
 			i += 1
