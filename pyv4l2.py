@@ -724,44 +724,44 @@ class Device(object):
 # =====================================================================
 if __name__ == '__main__':
 	ls = Device.List()
-	print 'Available devices: '
+	print 'Available devices: ', ls
 	
 	for i in ls:
 		print '\t', i
 	
-	d = Device(ls[0])
-	d.QueryCaps()
-	
-	print 'Capabilities:\t'
-	
-	for i in d.caps:
-		print '\t', i	
-	
-	try:
-		for i in range(0, 32):
-			r = d.EnumInput(i)
-			print """Input %i:
-\tName:\t%s
-\tType:\t%s
-\tStandards: %s""" % (i,
-				r[0],
-				r[1],
-				r[4],
-				)
-	except Exception, e:
-		pass
-	
-	d.SetInput(0)
-	d.SetStandard(d.standards['NTSC'])
-	
-	
-	print 'Pixel formats: '
-
-	for i in d.EnumFormats(d.buftypes['Capture']):
-		print '\t%s\t%s' % i	
-	
-	print 'Resolutions: '
-	
-	for i in d.GetResolutions():
-		print '\t%ix%i' % (i[0], i[1])
+		d = Device(i)
+		d.QueryCaps()
 		
+		print 'Capabilities:\t'
+		
+		for i in d.caps:
+			print '\t', i	
+		
+		try:
+			for i in range(0, 32):
+				r = d.EnumInput(i)
+				print """Input %i:
+	\tName:\t%s
+	\tType:\t%s
+	\tStandards: %s""" % (i,
+					r[0],
+					r[1],
+					r[4],
+					)
+		except Exception, e:
+			pass
+		
+		d.SetInput(0)
+		d.SetStandard(d.standards['NTSC'])
+		
+		
+		print 'Pixel formats: '
+
+		for i in d.EnumFormats(d.buftypes['Capture']):
+			print '\t%s\t%s' % i	
+		
+		print 'Resolutions: '
+		
+		for i in d.GetResolutions():
+			print '\t%ix%i' % (i[0], i[1])
+			
