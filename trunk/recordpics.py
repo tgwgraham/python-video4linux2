@@ -2,10 +2,14 @@
 
 # Released under the GPL v3 by Jackson Yee (jackson@gotpossum.com)
 # Copyright 2008
+#
+# Project site: http://code.google.com/p/python-video4linux2/
 
 """
 Sample application to test pyv4l2 read functionality
 """
+
+# =====================================================================
 
 import pyv4l2
 
@@ -71,6 +75,8 @@ def Run():
 			filename = '%s/%09i.jpg' % (options.outputdir, i)
 			d.SaveJPEG(filename, 70)
 			print 'Saved', filename
+			sys.stdout.write('.')
+			ys.stdout.flush()
 			i += 1
 	except KeyboardInterrupt:
 		print '\nKeyboard interrupt caught. Quitting...'
