@@ -2,52 +2,59 @@
 
 # Released under the GPL v3 by Jackson Yee (jackson@gotpossum.com)
 # Copyright 2008
-#
-# Project site: http://code.google.com/p/python-video4linux2/
+
+"""
+Sample application to test pyv4l2 read functionality
+"""
 
 import pyv4l2
 
-import sys
 import datetime
 import os
-import sys
 
-# =====================================================================
+from optparse import OptionParser
+
+
 def Run():
-	global numpictures
 
 	parser = OptionParser()
-	parser.add_option("-d", "--device", dest="device",
-			  help="video device", default="/dev/video0" )
-	parser.add_option("-i", "--input", dest="input",
-			  help="Input number: typically 0-8", default="0" )
-	parser.add_option("-p", "--pixelformat", dest="pixelformat",
-			  help="Format codes", default="RGB4" )
-	parser.add_option("-x", "--width", dest="width",
-			  help="Capture width", default="640" )
-	parser.add_option("-y", "--height", dest="height",
-			  help="Capture height", default="480" )
-	parser.add_option("-o", "--outputdir", dest="outputdir",
-			  help="Directory to save files into", default="pics" )
+	parser.add_option("-d", "--device",
+		default="/dev/video0", 
+		help="video device [%default]", )
+	parser.add_option("-i", "--input", 
+		type="int", default=0,
+		help="Input number: typically 0-8 [%default]" )
+	parser.add_option("-p", "--pixelformat", 
+		default="RGB4", 
+		help="Format code [%default]", )
+	parser.add_option("-x", "--width", 
+		type="int", default="800",
+		help="Capture width [%default]", )
+	parser.add_option("-y", "--height", 
+		type="int", default="600",
+		help="Capture height [%default]", )
+	parser.add_option("-o", "--outputdir", 
+		default="test",
+		help="Directory to save files into. [%default]", )
 
 	(options, args) = parser.parse_args()
 		
 	d = pyv4l2.Device(options.device)
 	
-	d.SetInput( int(options.input) )
+	d.SetInput( options.input )
 	
 	d.GetFormat()
 	d.SetStandard( d.standards['NTSC'] )
 	d.SetField( d.fields['Interlaced'] )
 	d.SetPixelFormat(options.pixelformat)
-	d.SetResolution( int(options.width), int(options.height) )
+	d.SetResolution( options.width, options.height )
 	
 	i = 0
 	starttime = datetime.datetime.now()	
 	
 	try:
-		print 'Trying to create directory', outputdir
-		os.mkdir(outputdir)
+		print 'Trying to create directory', options.outputdir
+		os.mkdir(options.outputdir)
 	except Exception, e:
 		print 'Could not create directory', e
 	
@@ -63,8 +70,7 @@ def Run():
 			d.Read()
 			filename = '%s/%09i.jpg' % (options.outputdir, i)
 			d.SaveJPEG(filename, 70)
-			sys.stdout.write('.')
-			sys.stdout.flush()
+			print 'Saved', filename
 			i += 1
 	except KeyboardInterrupt:
 		print '\nKeyboard interrupt caught. Quitting...'
