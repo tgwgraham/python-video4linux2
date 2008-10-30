@@ -2,6 +2,8 @@
 
 # Released under the GPL v3 by Jackson Yee (jackson@gotpossum.com)
 # Copyright 2008
+#
+# Project site: http://code.google.com/p/python-video4linux2/
 
 from ctypes import *
 import os
@@ -21,9 +23,9 @@ class Capabilities(Structure):
 		('driver',				c_char * 16),
 		('card',					c_char * 32),
 		('businfo',				c_char * 32),
-		('version',				c_uint),
-		('capabilities',	c_uint),
-		('reserved',			c_uint * 4),
+		('version',				c_uint32),
+		('capabilities',	c_uint32),
+		('reserved',			c_uint32 * 4),
 	]
 
 # *********************************************************************
@@ -42,31 +44,31 @@ class Input(Structure):
 # *********************************************************************
 class PixFormat(Structure):
 	_fields_	=	[
-		('type',					c_ulonglong),
-		('width',					c_uint),
-		('height',				c_uint),
+		('type',					c_uint64),
+		('width',					c_uint32),
+		('height',				c_uint32),
 		('pixelformat',		c_char * 4),
-		('field',					c_uint),
-		('bytesperline',	c_uint),
-		('sizeimage',			c_uint),
-		('colorspace',		c_uint),
-		('priv',					c_uint),
+		('field',					c_uint32),
+		('bytesperline',	c_uint32),
+		('sizeimage',			c_uint32),
+		('colorspace',		c_uint32),
+		('priv',					c_uint32),
 	]
 	
 # *********************************************************************
 class RequestBuffers(Structure):
 	_fields_	=	[
-		('count',					c_uint),
-		('type',					c_uint),
-		('memory',				c_uint),
-		('reserved',			c_uint * 2),
+		('count',					c_uint32),
+		('type',					c_uint32),
+		('memory',				c_uint32),
+		('reserved',			c_uint32 * 2),
 	]
 	
 # *********************************************************************
 class TimeCode(Structure):
 	_fields_	=	[
-		('type',					c_uint),
-		('flags',					c_uint),
+		('type',					c_uint32),
+		('flags',					c_uint32),
 		('frames',				c_ubyte),
 		('seconds',				c_ubyte),
 		('minutes',				c_ubyte),
@@ -78,36 +80,36 @@ class TimeCode(Structure):
 class Buffer(Structure):
 	class M(Union):
 		_fields_	=	[
-			('offset',				c_uint),
+			('offset',				c_uint32),
 			('userptr',				c_ulong),
 		]
 		
 	_fields_	=	[
-		('index',					c_uint),
-		('type',					c_uint),
-		('bytesused',			c_uint),
-		('flags',					c_uint),
-		('field',					c_uint),
+		('index',					c_uint32),
+		('type',					c_uint32),
+		('bytesused',			c_uint32),
+		('flags',					c_uint32),
+		('field',					c_uint32),
 		('seconds',				c_long),
 		('nanoseconds',		c_long),
 		('timecode',			TimeCode),
-		('sequence',			c_uint),
-		('memory',				c_uint),
+		('sequence',			c_uint32),
+		('memory',				c_uint32),
 		('m',							M),
-		('length',				c_uint),
-		('input',					c_uint),
-		('reserved',			c_uint),
+		('length',				c_uint32),
+		('input',					c_uint32),
+		('reserved',			c_uint32),
 	]
 	
 # *********************************************************************
 class Format(Structure):
 	_fields_	=	[
-		('index',					c_uint),
-		('type',					c_uint),
-		('flags',					c_uint),
+		('index',					c_uint32),
+		('type',					c_uint32),
+		('flags',					c_uint32),
 		('description',		c_char * 32),
 		('pixelformat',		c_char * 4),
-		('reserved',			c_uint * 4),
+		('reserved',			c_uint32 * 4),
 	]
 	
 # *********************************************************************
@@ -523,13 +525,16 @@ class Device(object):
 		
 		self.GetFormat()
 		ls = []
+		f = self.format
 		
 		for v in self.resolutions:
 			try:
-				self.format.width = v[0]
-				self.format.height = v[1]
+				f.width, f.height = v
+				
 				self.SetFormat()
-				ls.append( (self.format.width, self.format.height) )
+				
+				if f.width == v[0] and f.height == v[1]:
+					ls.append( (f.width, f.height) )
 			except Exception, e:
 				pass
 		
@@ -758,8 +763,5 @@ if __name__ == '__main__':
 	print 'Resolutions: '
 	
 	for i in d.GetResolutions():
-		print '\t', i
+		print '\t%ix%i' % (i[0], i[1])
 		
-	d.SetPixelFormat('RGB4')
-	d.SetResolution(640, 480)
-	

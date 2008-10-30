@@ -2,6 +2,8 @@
 
 # Released under the GPL v3 by Jackson Yee (jackson@gotpossum.com)
 # Copyright 2008
+#
+# Project site: http://code.google.com/p/python-video4linux2/
 
 import pyv4l2
 
@@ -10,42 +12,47 @@ import datetime
 import os
 import sys
 
+# =====================================================================
 def Run():
-	if len(sys.argv) < 7:
-		print """recordpics.py device input pixelformat width height outputdir
+	global numpictures
+
+	parser = OptionParser()
+	parser.add_option("-d", "--device", dest="device",
+			  help="video device", default="/dev/video0" )
+	parser.add_option("-i", "--input", dest="input",
+			  help="Input number: typically 0-8", default="0" )
+	parser.add_option("-p", "--pixelformat", dest="pixelformat",
+			  help="Format codes", default="RGB4" )
+	parser.add_option("-x", "--width", dest="width",
+			  help="Capture width", default="640" )
+	parser.add_option("-y", "--height", dest="height",
+			  help="Capture height", default="480" )
+	parser.add_option("-o", "--outputdir", dest="outputdir",
+			  help="Directory to save files into", default="pics" )
+
+	(options, args) = parser.parse_args()
 		
-Sample application to test pyv4l2 read functionality
+	d = pyv4l2.Device(options.device)
 	
-	device		Video device: e.g. /dev/video0
-	input		Input number: typically 0-8
-	pixelformat	Format codes: e.g. RGB4
-	width		Capture width
-	height		Capture height
-	outputdir	Directory to save files into
-	"""
-		return
-		
-	d = pyv4l2.Device(sys.argv[1])
-	
-	d.SetInput( int(sys.argv[2]) )
+	d.SetInput( int(options.input) )
 	
 	d.GetFormat()
 	d.SetStandard( d.standards['NTSC'] )
 	d.SetField( d.fields['Interlaced'] )
-	d.SetPixelFormat(sys.argv[3])
-	d.SetResolution( int(sys.argv[4]), int(sys.argv[5])	 )
+	d.SetPixelFormat(options.pixelformat)
+	d.SetResolution( int(options.width), int(options.height) )
 	
 	i = 0
 	starttime = datetime.datetime.now()	
 	
 	try:
-		print 'Trying to create directory', sys.argv[6]
-		os.mkdir(sys.argv[6])
+		print 'Trying to create directory', outputdir
+		os.mkdir(outputdir)
 	except Exception, e:
 		print 'Could not create directory', e
 	
-	print 'Recording %s:%s with format %s at (%s, %s)' % (sys.argv[1],
-		sys.argv[2],
+	print 'Recording %s:%s with format %s at (%s, %s)' % (options.device,
+		options.input,
 		d.format.pixelformat,
 		d.format.width,
 		d.format.height,
@@ -54,7 +61,7 @@ Sample application to test pyv4l2 read functionality
 	try:
 		while True:
 			d.Read()
-			filename = '%s/%09i.jpg' % (sys.argv[6], i)
+			filename = '%s/%09i.jpg' % (options.outputdir, i)
 			d.SaveJPEG(filename, 70)
 			sys.stdout.write('.')
 			sys.stdout.flush()
