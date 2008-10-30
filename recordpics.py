@@ -15,6 +15,7 @@ import pyv4l2
 
 import datetime
 import os
+import sys
 
 from optparse import OptionParser
 
@@ -76,7 +77,7 @@ def Run():
 			d.SaveJPEG(filename, 70)
 			print 'Saved', filename
 			sys.stdout.write('.')
-			ys.stdout.flush()
+			sys.stdout.flush()
 			i += 1
 	except KeyboardInterrupt:
 		print '\nKeyboard interrupt caught. Quitting...'
