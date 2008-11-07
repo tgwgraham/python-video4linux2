@@ -18,6 +18,14 @@ def ListFlags(value, flags):
 	return [k for k, v in flags.iteritems() if value & v]
 
 # *********************************************************************
+def FindKey(d, value):
+	for k, v in d.iteritems():
+		if v == value:
+			return k
+			
+	return None
+		
+# *********************************************************************
 class Capabilities(Structure):
 	_fields_	=	[
 		('driver',				c_char * 16),
@@ -44,7 +52,7 @@ class Input(Structure):
 # *********************************************************************
 class PixFormat(Structure):
 	_fields_	=	[
-		('type',					c_uint64),
+		('type',					c_long),
 		('width',					c_uint32),
 		('height',				c_uint32),
 		('pixelformat',		c_char * 4),
@@ -453,7 +461,7 @@ class Device(object):
 		"""
 		if lib.SetStandard(self.fd, standard) == -1:
 			raise Exception('Could not set standard %i:\t%i: %s' % 
-				(FindKey(self.standards, std, 'Unknown'), 
+				(FindKey(self.standards, standard), 
 					lib.Errno(), 
 					lib.Error()
 				)
